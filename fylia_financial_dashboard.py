@@ -181,7 +181,7 @@ st.markdown("## Detailed Cost Breakdown")
 col_init_1, col_init_2, col_init_3 = st.columns(3)
 with col_init_1:
     st.subheader("Initial Investment Breakdown (GHS)")
-    init_property = st.number_input("Property Purchase", min_value=0, value=1700000, step=1000, key="init_property")
+    init_property = st.number_input("Property Rental", min_value=0, value=1700000, step=1000, key="init_property")
     init_setup = st.number_input("Setup & Furnishing", min_value=0, value=200000, step=1000, key="init_setup")
     init_licenses = st.number_input("Licenses & Permits", min_value=0, value=50000, step=1000, key="init_licenses")
 
