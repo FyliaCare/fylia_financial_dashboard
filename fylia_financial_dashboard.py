@@ -173,41 +173,125 @@ with c3:
     st.plotly_chart(scatter_cumu2, use_container_width=True)
 
 # ----------------------
-# DETAILED COST INPUTS moved from sidebar to here
+# DETAILED COST INPUTS moved from sidebar to here, with flexible entry methods
 # ----------------------
 st.markdown("---")
-st.markdown("## Detailed Cost Breakdown")
+st.markdown("## Detailed Cost Breakdown — Initial Investment & Monthly Fixed Costs")
 
-col_init_1, col_init_2, col_init_3 = st.columns(3)
-with col_init_1:
-    st.subheader("Initial Investment Breakdown (GHS)")
-    init_property = st.number_input("Property Rental", min_value=0, value=1700000, step=1000, key="init_property")
-    init_setup = st.number_input("Setup & Furnishing", min_value=0, value=200000, step=1000, key="init_setup")
-    init_licenses = st.number_input("Licenses & Permits", min_value=0, value=50000, step=1000, key="init_licenses")
+# ----------------------
+# INITIAL INVESTMENT ENTRY MODE
+# ----------------------
+st.subheader("Initial Investment — choose input method")
 
-with col_init_2:
-    st.subheader("More Initial Costs")
-    init_marketing = st.number_input("Initial Marketing Campaigns", min_value=0, value=30000, step=1000, key="init_marketing")
-    init_other = st.number_input("Other Initial Costs", min_value=0, value=20000, step=1000, key="init_other")
+init_mode = st.radio(
+    "How do you want to enter Initial Investment?",
+    ("Enter full initial cost", "Use Fylia predefined breakdown", "Enter custom breakdown"),
+    index=1,
+    key="init_mode"
+)
 
-with col_init_3:
-    initial_investment = init_property + init_setup + init_licenses + init_marketing + init_other
-    st.markdown(f"### Total Initial Investment: GHS {initial_investment:,}")
+# Fylia predefined breakdown (as provided)
+fylia_defaults = {
+    "Product & engineering (MVP + 9 months enhancements)": 240000,
+    "Ops & salaries (core team for 12 months)": 420000,
+    "Marketing & CAC (launch + growth)": 240000,
+    "Caregiver onboarding & training, QA": 96000,
+    "Legal / regulatory / insurance": 48000,
+    "Working capital / contingency": 156000
+}
 
-col_month_1, col_month_2, col_month_3 = st.columns(3)
-with col_month_1:
-    st.subheader("Monthly Fixed Costs Breakdown (GHS)")
-    monthly_salaries = st.number_input("Salaries & Wages", min_value=0, value=10000, step=500, key="monthly_salaries")
-    monthly_rent = st.number_input("Rent & Utilities", min_value=0, value=5000, step=500, key="monthly_rent")
+if init_mode == "Enter full initial cost":
+    init_full = st.number_input("Enter total initial investment (GHS)", min_value=0, value=183700, step=1000, key="init_full")
+    initial_investment = init_full
 
-with col_month_2:
-    monthly_maintenance = st.number_input("Maintenance & Supplies", min_value=0, value=3000, step=500, key="monthly_maintenance")
-    monthly_insurance = st.number_input("Insurance & Fees", min_value=0, value=1000, step=500, key="monthly_insurance")
+elif init_mode == "Use Fylia predefined breakdown":
+    st.markdown("**Fylia default allocation — edit if you want**")
+    col_a, col_b = st.columns(2)
+    init_vals = {}
+    with col_a:
+        init_vals["Product & engineering (MVP + 9 months enhancements)"] = st.number_input(
+            "Product & engineering (GHS)", min_value=0, value=fylia_defaults["Product & engineering (MVP + 9 months enhancements)"], step=1000, key="init_prod"
+        )
+        init_vals["Marketing & CAC (GHS)"] = st.number_input(
+            "Marketing & CAC (GHS)", min_value=0, value=fylia_defaults["Marketing & CAC (launch + growth)"], step=1000, key="init_marketing_main"
+        )
+        init_vals["Legal / regulatory / insurance (GHS)"] = st.number_input(
+            "Legal / regulatory / insurance (GHS)", min_value=0, value=fylia_defaults["Legal / regulatory / insurance"], step=1000, key="init_legal"
+        )
+    with col_b:
+        init_vals["Ops & salaries (GHS)"] = st.number_input(
+            "Ops & salaries (GHS)", min_value=0, value=fylia_defaults["Ops & salaries (core team for 12 months)"], step=1000, key="init_ops"
+        )
+        init_vals["Caregiver onboarding & training (GHS)"] = st.number_input(
+            "Caregiver onboarding & training (GHS)", min_value=0, value=fylia_defaults["Caregiver onboarding & training, QA"], step=1000, key="init_cg"
+        )
+        init_vals["Working capital / contingency (GHS)"] = st.number_input(
+            "Working capital / contingency (GHS)", min_value=0, value=fylia_defaults["Working capital / contingency"], step=1000, key="init_wc"
+        )
+    initial_investment = sum(init_vals.values())
 
-with col_month_3:
-    monthly_other = st.number_input("Other Monthly Costs", min_value=0, value=1000, step=500, key="monthly_other")
+else:  # custom breakdown
+    st.markdown("**Enter your custom initial cost categories**")
+    custom_initial = {}
+    # provide 6 editable lines but user can set to 0 if unused
+    for i in range(1, 7):
+        label = st.text_input(f"Custom initial category {i} name", value=f"Initial item {i}", key=f"cust_init_name_{i}")
+        amount = st.number_input(f"Cost for '{label}' (GHS)", min_value=0, value=0, step=1000, key=f"cust_init_val_{i}")
+        custom_initial[label] = amount
+    initial_investment = sum(custom_initial.values())
+
+st.markdown(f"### Total Initial Investment: GHS {initial_investment:,.0f}")
+
+# ----------------------
+# MONTHLY FIXED COSTS ENTRY MODE
+# ----------------------
+st.subheader("Monthly Fixed Costs — choose input method")
+
+month_mode = st.radio(
+    "How do you want to enter Monthly Fixed Costs?",
+    ("Enter full monthly fixed cost", "Use detailed monthly inputs", "Enter custom monthly breakdown"),
+    index=1,
+    key="month_mode"
+)
+
+if month_mode == "Enter full monthly fixed cost":
+    monthly_full = st.number_input("Enter total monthly fixed costs (GHS)", min_value=0, value=18000, step=500, key="monthly_full")
+    # map to original variable names for compatibility
+    monthly_salaries = monthly_full * 0.6  # heuristic split for display
+    monthly_rent = monthly_full * 0.2
+    monthly_maintenance = monthly_full * 0.1
+    monthly_insurance = monthly_full * 0.05
+    monthly_other = monthly_full * 0.05
+    fixed_costs = monthly_full
+
+elif month_mode == "Use detailed monthly inputs":
+    col_month_1, col_month_2, col_month_3 = st.columns(3)
+    with col_month_1:
+        monthly_salaries = st.number_input("Salaries & Wages", min_value=0, value=10000, step=500, key="monthly_salaries")
+        monthly_rent = st.number_input("Rent & Utilities", min_value=0, value=5000, step=500, key="monthly_rent")
+    with col_month_2:
+        monthly_maintenance = st.number_input("Maintenance & Supplies", min_value=0, value=3000, step=500, key="monthly_maintenance")
+        monthly_insurance = st.number_input("Insurance & Fees", min_value=0, value=1000, step=500, key="monthly_insurance")
+    with col_month_3:
+        monthly_other = st.number_input("Other Monthly Costs", min_value=0, value=1000, step=500, key="monthly_other")
     fixed_costs = monthly_salaries + monthly_rent + monthly_maintenance + monthly_insurance + monthly_other
-    st.markdown(f"### Total Monthly Fixed Costs: GHS {fixed_costs:,}")
+
+else:  # custom monthly breakdown
+    st.markdown("**Enter your custom monthly categories**")
+    custom_monthly = {}
+    for i in range(1, 7):
+        label = st.text_input(f"Custom monthly category {i} name", value=f"Monthly item {i}", key=f"cust_month_name_{i}")
+        amount = st.number_input(f"Amount for '{label}' (GHS)", min_value=0, value=0, step=100, key=f"cust_month_val_{i}")
+        custom_monthly[label] = amount
+    fixed_costs = sum(custom_monthly.values())
+    # assign friendly names for display (may be 0)
+    monthly_salaries = custom_monthly.get(list(custom_monthly.keys())[0], 0)
+    monthly_rent = custom_monthly.get(list(custom_monthly.keys())[1], 0) if len(custom_monthly) > 1 else 0
+    monthly_maintenance = custom_monthly.get(list(custom_monthly.keys())[2], 0) if len(custom_monthly) > 2 else 0
+    monthly_insurance = custom_monthly.get(list(custom_monthly.keys())[3], 0) if len(custom_monthly) > 3 else 0
+    monthly_other = sum(list(custom_monthly.values())[4:]) if len(custom_monthly) > 4 else 0
+
+st.markdown(f"### Total Monthly Fixed Costs: GHS {fixed_costs:,.0f}")
 
 # ----------------------
 # Now update projections with real fixed_costs and initial_investment (only if no upload)
